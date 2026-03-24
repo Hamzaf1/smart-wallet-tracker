@@ -1,4 +1,4 @@
-import { Home, ArrowLeftRight, Wallet, User } from "lucide-react";
+import { Home, ArrowLeftRight, Wallet, User, Upload } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
