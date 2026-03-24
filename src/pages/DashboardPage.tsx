@@ -1,10 +1,12 @@
 import { AppLayout } from "@/components/AppLayout";
 import { useAuthStore } from "@/stores/authStore";
-import { TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowRight, Lightbulb, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CATEGORIES } from "@/lib/constants";
 import { useMemo } from "react";
 import { useAccounts, useTransactions, useMonthlyStats } from "@/hooks/useFinanceData";
+import { useMonthlyInsights } from "@/hooks/useMonthlyInsights";
+import { motion } from "framer-motion";
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
@@ -12,6 +14,7 @@ export default function DashboardPage() {
   const { data: accounts = [] } = useAccounts();
   const { data: transactions = [] } = useTransactions();
   const { data: stats } = useMonthlyStats();
+  const { data: insights = [] } = useMonthlyInsights();
 
   const totalBalance = useMemo(
     () => accounts.reduce((sum, a) => sum + a.balance, 0),
@@ -25,6 +28,20 @@ export default function DashboardPage() {
 
   const monthlyIncome = stats?.total_income ?? 0;
   const monthlyExpense = stats?.total_expense ?? 0;
+
+  const trendIcon = (trend: string) => {
+    if (trend === "up") return <ArrowUpRight className="h-3.5 w-3.5" />;
+    if (trend === "down") return <ArrowDownRight className="h-3.5 w-3.5" />;
+    return <Minus className="h-3.5 w-3.5" />;
+  };
+
+  const trendColor = (trend: string, type: string) => {
+    if (type === "savings_rate") return trend === "up" ? "text-expense" : "text-income";
+    if (type === "spending_trend") return trend === "up" ? "text-expense" : "text-income";
+    if (trend === "up") return "text-expense";
+    if (trend === "down") return "text-income";
+    return "text-muted-foreground";
+  };
 
   return (
     <AppLayout>
@@ -68,6 +85,37 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Monthly Insights */}
+        {insights.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-chart-3" />
+              <h2 className="text-base font-semibold text-foreground">Monthly Insights</h2>
+            </div>
+            <div className="space-y-2">
+              {insights.map((insight, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  className="flex items-start gap-3 bg-card rounded-xl p-3.5 border border-border/50"
+                >
+                  <div className={`mt-0.5 shrink-0 ${trendColor(insight.trend, insight.type)}`}>
+                    {trendIcon(insight.trend)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">{insight.message}</p>
+                    {insight.detail && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{insight.detail}</p>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Spending by Category */}
         {stats?.category_totals && stats.category_totals.length > 0 && (
