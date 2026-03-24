@@ -12,6 +12,8 @@ import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import ImportPage from "./pages/ImportPage";
+import BudgetPage from "./pages/BudgetPage";
+import RecurringPage from "./pages/RecurringPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
