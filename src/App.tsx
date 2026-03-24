@@ -104,6 +104,8 @@ function AppRoutes() {
       <Route path="/transactions" element={<AuthGuard session={session}><TransactionsPage /></AuthGuard>} />
       <Route path="/accounts" element={<AuthGuard session={session}><AccountsPage /></AuthGuard>} />
       <Route path="/import" element={<AuthGuard session={session}><ImportPage /></AuthGuard>} />
+      <Route path="/budget" element={<AuthGuard session={session}><BudgetPage /></AuthGuard>} />
+      <Route path="/recurring" element={<AuthGuard session={session}><RecurringPage /></AuthGuard>} />
       <Route path="/profile" element={<AuthGuard session={session}><ProfilePage /></AuthGuard>} />
       <Route path="*" element={<NotFound />} />
     </Routes>

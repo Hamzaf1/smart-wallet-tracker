@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const tabs = [
   { path: "/", icon: Home, label: "Home" },
-  { path: "/transactions", icon: ArrowLeftRight, label: "Transactions" },
+  { path: "/transactions", icon: ArrowLeftRight, label: "Activity" },
   { path: "/import", icon: Upload, label: "Import" },
   { path: "/accounts", icon: Wallet, label: "Accounts" },
   { path: "/profile", icon: User, label: "Profile" },
@@ -24,7 +24,7 @@ export function BottomNav() {
               key={tab.path}
               onClick={() => navigate(tab.path)}
               className={cn(
-                "flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors",
+                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors",
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
