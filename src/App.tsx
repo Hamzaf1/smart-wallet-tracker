@@ -11,6 +11,7 @@ import AccountsPage from "./pages/AccountsPage";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import OnboardingPage from "./pages/OnboardingPage";
+import ImportPage from "./pages/ImportPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -100,6 +101,7 @@ function AppRoutes() {
       <Route path="/" element={<AuthGuard session={session}><DashboardPage /></AuthGuard>} />
       <Route path="/transactions" element={<AuthGuard session={session}><TransactionsPage /></AuthGuard>} />
       <Route path="/accounts" element={<AuthGuard session={session}><AccountsPage /></AuthGuard>} />
+      <Route path="/import" element={<AuthGuard session={session}><ImportPage /></AuthGuard>} />
       <Route path="/profile" element={<AuthGuard session={session}><ProfilePage /></AuthGuard>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
