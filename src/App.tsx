@@ -101,6 +101,7 @@ function AppRoutes() {
       <Route path="/" element={<AuthGuard session={session}><DashboardPage /></AuthGuard>} />
       <Route path="/transactions" element={<AuthGuard session={session}><TransactionsPage /></AuthGuard>} />
       <Route path="/accounts" element={<AuthGuard session={session}><AccountsPage /></AuthGuard>} />
+      <Route path="/import" element={<AuthGuard session={session}><ImportPage /></AuthGuard>} />
       <Route path="/profile" element={<AuthGuard session={session}><ProfilePage /></AuthGuard>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
