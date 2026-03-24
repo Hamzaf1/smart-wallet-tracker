@@ -1,7 +1,7 @@
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Moon, Sun } from "lucide-react";
+import { LogOut, User, Moon, Sun, Target, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -54,6 +54,20 @@ export default function ProfilePage() {
         </div>
 
         <div className="space-y-2">
+          <button
+            onClick={() => navigate("/budget")}
+            className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
+          >
+            <Target className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium text-foreground">Budget</span>
+          </button>
+          <button
+            onClick={() => navigate("/recurring")}
+            className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
+          >
+            <RefreshCw className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium text-foreground">Recurring Transactions</span>
+          </button>
           <button
             onClick={() => setDark(!dark)}
             className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
