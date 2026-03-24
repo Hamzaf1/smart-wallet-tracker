@@ -6,7 +6,11 @@ import { CATEGORIES } from "@/lib/constants";
 import { useMemo } from "react";
 import { useAccounts, useTransactions, useMonthlyStats } from "@/hooks/useFinanceData";
 import { useMonthlyInsights } from "@/hooks/useMonthlyInsights";
+import { useMonthlyChartData } from "@/hooks/useChartData";
 import { motion } from "framer-motion";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+
+const CHART_COLORS = ["hsl(217,91%,60%)", "hsl(142,71%,45%)", "hsl(38,92%,50%)", "hsl(280,67%,60%)", "hsl(0,84%,60%)", "hsl(200,80%,50%)"];
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
@@ -15,19 +19,21 @@ export default function DashboardPage() {
   const { data: transactions = [] } = useTransactions();
   const { data: stats } = useMonthlyStats();
   const { data: insights = [] } = useMonthlyInsights();
+  const { data: chartData = [] } = useMonthlyChartData(6);
 
-  const totalBalance = useMemo(
-    () => accounts.reduce((sum, a) => sum + a.balance, 0),
-    [accounts]
-  );
-
-  const recentTransactions = useMemo(
-    () => transactions.slice(0, 5),
-    [transactions]
-  );
+  const totalBalance = useMemo(() => accounts.reduce((sum, a) => sum + a.balance, 0), [accounts]);
+  const recentTransactions = useMemo(() => transactions.slice(0, 5), [transactions]);
 
   const monthlyIncome = stats?.total_income ?? 0;
   const monthlyExpense = stats?.total_expense ?? 0;
+
+  const pieData = useMemo(() => {
+    if (!stats?.category_totals) return [];
+    return stats.category_totals.map((ct) => {
+      const cat = CATEGORIES.find((c) => c.id === ct.category);
+      return { name: cat?.label || ct.category, value: ct.total, icon: cat?.icon || "📌" };
+    });
+  }, [stats]);
 
   const trendIcon = (trend: string) => {
     if (trend === "up") return <ArrowUpRight className="h-3.5 w-3.5" />;
@@ -36,16 +42,13 @@ export default function DashboardPage() {
   };
 
   const trendColor = (trend: string, type: string) => {
-    if (type === "savings_rate") return trend === "up" ? "text-expense" : "text-income";
-    if (type === "spending_trend") return trend === "up" ? "text-expense" : "text-income";
-    if (trend === "up") return "text-expense";
-    if (trend === "down") return "text-income";
-    return "text-muted-foreground";
+    if (type === "savings_rate" || type === "spending_trend") return trend === "up" ? "text-expense" : "text-income";
+    return trend === "up" ? "text-expense" : trend === "down" ? "text-income" : "text-muted-foreground";
   };
 
   return (
     <AppLayout>
-      <div className="px-5 pt-6 space-y-6">
+      <div className="px-5 pt-6 space-y-6 pb-24">
         {/* Header */}
         <div>
           <p className="text-muted-foreground text-sm">Welcome back,</p>
@@ -67,9 +70,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-[10px] opacity-70">Income</p>
-                <p className="text-sm font-semibold">
-                  {monthlyIncome.toLocaleString("en-US", { style: "currency", currency: "MAD" })}
-                </p>
+                <p className="text-sm font-semibold">{monthlyIncome.toLocaleString("en-US", { style: "currency", currency: "MAD" })}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -78,9 +79,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-[10px] opacity-70">Expenses</p>
-                <p className="text-sm font-semibold">
-                  {monthlyExpense.toLocaleString("en-US", { style: "currency", currency: "MAD" })}
-                </p>
+                <p className="text-sm font-semibold">{monthlyExpense.toLocaleString("en-US", { style: "currency", currency: "MAD" })}</p>
               </div>
             </div>
           </div>
@@ -91,7 +90,7 @@ export default function DashboardPage() {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Lightbulb className="h-4 w-4 text-chart-3" />
-              <h2 className="text-base font-semibold text-foreground">Monthly Insights</h2>
+              <h2 className="text-base font-semibold text-foreground">Insights</h2>
             </div>
             <div className="space-y-2">
               {insights.map((insight, i) => (
@@ -102,14 +101,10 @@ export default function DashboardPage() {
                   transition={{ delay: i * 0.08 }}
                   className="flex items-start gap-3 bg-card rounded-xl p-3.5 border border-border/50"
                 >
-                  <div className={`mt-0.5 shrink-0 ${trendColor(insight.trend, insight.type)}`}>
-                    {trendIcon(insight.trend)}
-                  </div>
+                  <div className={`mt-0.5 shrink-0 ${trendColor(insight.trend, insight.type)}`}>{trendIcon(insight.trend)}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground">{insight.message}</p>
-                    {insight.detail && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{insight.detail}</p>
-                    )}
+                    {insight.detail && <p className="text-xs text-muted-foreground mt-0.5">{insight.detail}</p>}
                   </div>
                 </motion.div>
               ))}
@@ -117,27 +112,58 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Spending by Category */}
-        {stats?.category_totals && stats.category_totals.length > 0 && (
+        {/* Spending Pie Chart */}
+        {pieData.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-base font-semibold text-foreground">Spending by Category</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {stats.category_totals.slice(0, 4).map((ct) => {
-                const cat = CATEGORIES.find((c) => c.id === ct.category);
-                return (
-                  <div key={ct.category} className="bg-card rounded-xl p-3 border border-border">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{cat?.icon || "📌"}</span>
-                      <span className="text-sm font-medium text-foreground truncate">
-                        {cat?.label || ct.category}
-                      </span>
-                    </div>
-                    <p className="text-base font-bold text-foreground mt-1">
-                      {ct.total.toLocaleString("en-US", { style: "currency", currency: "MAD" })}
-                    </p>
+            <h2 className="text-base font-semibold text-foreground">Spending Breakdown</h2>
+            <div className="bg-card rounded-2xl p-4 border border-border">
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={3} dataKey="value">
+                    {pieData.map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number) => `${value.toFixed(0)} MAD`}
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "0.75rem", fontSize: "12px" }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">
+                {pieData.map((entry, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                    <span className="text-[11px] text-muted-foreground">{entry.icon} {entry.name}</span>
                   </div>
-                );
-              })}
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Monthly Trend Bar Chart */}
+        {chartData.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-base font-semibold text-foreground">Monthly Trend</h2>
+            <div className="bg-card rounded-2xl p-4 border border-border">
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={chartData} barGap={2}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={40} />
+                  <Tooltip
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "0.75rem", fontSize: "12px" }}
+                    formatter={(value: number) => `${value.toFixed(0)} MAD`}
+                  />
+                  <Bar dataKey="income" fill="hsl(142,71%,45%)" radius={[4, 4, 0, 0]} name="Income" />
+                  <Bar dataKey="expense" fill="hsl(0,84%,60%)" radius={[4, 4, 0, 0]} name="Expense" />
+                </BarChart>
+              </ResponsiveContainer>
+              <div className="flex gap-4 mt-2 justify-center">
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-income" /><span className="text-[11px] text-muted-foreground">Income</span></div>
+                <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-expense" /><span className="text-[11px] text-muted-foreground">Expense</span></div>
+              </div>
             </div>
           </div>
         )}
@@ -146,10 +172,7 @@ export default function DashboardPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-foreground">Recent Transactions</h2>
-            <button
-              onClick={() => navigate("/transactions")}
-              className="text-primary text-xs font-medium flex items-center gap-1"
-            >
+            <button onClick={() => navigate("/transactions")} className="text-primary text-xs font-medium flex items-center gap-1">
               See all <ArrowRight className="h-3 w-3" />
             </button>
           </div>
@@ -163,31 +186,14 @@ export default function DashboardPage() {
               {recentTransactions.map((tx) => {
                 const cat = CATEGORIES.find((c) => c.id === tx.category);
                 return (
-                  <div
-                    key={tx.id}
-                    className="flex items-center gap-3 bg-card rounded-xl p-3 border border-border"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-lg">
-                      {cat?.icon || "📌"}
-                    </div>
+                  <div key={tx.id} className="flex items-center gap-3 bg-card rounded-xl p-3 border border-border">
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-lg">{cat?.icon || "📌"}</div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {cat?.label || tx.category}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {tx.accounts?.name} · {new Date(tx.date).toLocaleDateString()}
-                      </p>
+                      <p className="text-sm font-medium text-foreground truncate">{cat?.label || tx.category}</p>
+                      <p className="text-xs text-muted-foreground">{tx.accounts?.name} · {new Date(tx.date).toLocaleDateString()}</p>
                     </div>
-                    <p
-                      className={`text-sm font-bold ${
-                        tx.type === "income" ? "text-income" : "text-expense"
-                      }`}
-                    >
-                      {tx.type === "income" ? "+" : "-"}
-                      {Math.abs(tx.amount).toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "MAD",
-                      })}
+                    <p className={`text-sm font-bold ${tx.type === "income" ? "text-income" : "text-expense"}`}>
+                      {tx.type === "income" ? "+" : "-"}{Math.abs(tx.amount).toLocaleString("en-US", { style: "currency", currency: "MAD" })}
                     </p>
                   </div>
                 );
