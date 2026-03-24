@@ -1,19 +1,40 @@
 import { AppLayout } from "@/components/AppLayout";
-import { useAuthStore } from "@/stores/authStore";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Moon, Sun } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 export default function ProfilePage() {
-  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
   const [dark, setDark] = useState(() =>
     document.documentElement.classList.contains("dark")
   );
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+      return { ...data, email: user.email };
+    },
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
 
   return (
     <AppLayout>
@@ -26,9 +47,9 @@ export default function ProfilePage() {
           </div>
           <div>
             <p className="text-base font-semibold text-foreground">
-              {user?.name || "User"}
+              {profile?.display_name || "User"}
             </p>
-            <p className="text-sm text-muted-foreground">{user?.email}</p>
+            <p className="text-sm text-muted-foreground">{profile?.email}</p>
           </div>
         </div>
 
@@ -47,7 +68,7 @@ export default function ProfilePage() {
         <Button
           variant="destructive"
           className="w-full h-12"
-          onClick={logout}
+          onClick={handleLogout}
         >
           <LogOut className="h-4 w-4 mr-2" /> Log Out
         </Button>

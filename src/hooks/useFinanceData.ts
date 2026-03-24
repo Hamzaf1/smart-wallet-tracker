@@ -1,91 +1,102 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthStore } from "@/stores/authStore";
+import { supabase } from "@/integrations/supabase/client";
 import type { Account, Transaction, MonthlyStats } from "@/lib/types";
-
-const API = import.meta.env.VITE_API_URL || "";
-
-function useApi() {
-  const token = useAuthStore((s) => s.token);
-  const logout = useAuthStore((s) => s.logout);
-
-  const fetchApi = async (path: string, options?: RequestInit) => {
-    const res = await fetch(`${API}${path}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        ...options?.headers,
-      },
-    });
-    if (res.status === 401) {
-      logout();
-      throw new Error("Unauthorized");
-    }
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Request failed");
-    return data;
-  };
-
-  return fetchApi;
-}
+import { startOfMonth, endOfMonth } from "date-fns";
 
 // ---- ACCOUNTS ----
 export function useAccounts() {
-  const fetchApi = useApi();
   return useQuery<Account[]>({
     queryKey: ["accounts"],
-    queryFn: () => fetchApi("/accounts"),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("accounts")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as Account[];
+    },
   });
 }
 
 export function useCreateAccount() {
-  const fetchApi = useApi();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Omit<Account, "id" | "user_id" | "created_at">) =>
-      fetchApi("/accounts", { method: "POST", body: JSON.stringify(data) }),
+    mutationFn: async (input: { name: string; balance: number; color: string; icon: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { data, error } = await supabase
+        .from("accounts")
+        .insert({ ...input, user_id: user.id })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["accounts"] }),
   });
 }
 
 export function useUpdateAccount() {
-  const fetchApi = useApi();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string } & Partial<Account>) =>
-      fetchApi(`/accounts/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    mutationFn: async ({ id, ...updates }: { id: string } & Partial<Account>) => {
+      const { data, error } = await supabase
+        .from("accounts")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["accounts"] }),
   });
 }
 
 export function useDeleteAccount() {
-  const fetchApi = useApi();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      fetchApi(`/accounts/${id}`, { method: "DELETE" }),
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("accounts").delete().eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["accounts"] });
       qc.invalidateQueries({ queryKey: ["transactions"] });
+      qc.invalidateQueries({ queryKey: ["monthly-stats"] });
     },
   });
 }
 
 // ---- TRANSACTIONS ----
 export function useTransactions() {
-  const fetchApi = useApi();
   return useQuery<Transaction[]>({
     queryKey: ["transactions"],
-    queryFn: () => fetchApi("/transactions"),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*, accounts(name)")
+        .order("date", { ascending: false });
+      if (error) throw error;
+      return data as Transaction[];
+    },
   });
 }
 
 export function useCreateTransaction() {
-  const fetchApi = useApi();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Omit<Transaction, "id" | "user_id" | "created_at" | "accounts">) =>
-      fetchApi("/transactions", { method: "POST", body: JSON.stringify(data) }),
+    mutationFn: async (input: { account_id: string; amount: number; type: "income" | "expense"; category: string; note?: string; date?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { data, error } = await supabase
+        .from("transactions")
+        .insert({ ...input, user_id: user.id })
+        .select("*, accounts(name)")
+        .single();
+      if (error) throw error;
+      return data;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["transactions"] });
       qc.invalidateQueries({ queryKey: ["accounts"] });
@@ -95,11 +106,19 @@ export function useCreateTransaction() {
 }
 
 export function useUpdateTransaction() {
-  const fetchApi = useApi();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string } & Partial<Transaction>) =>
-      fetchApi(`/transactions/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    mutationFn: async ({ id, ...updates }: { id: string } & Partial<Transaction>) => {
+      const { accounts, ...cleanUpdates } = updates as any;
+      const { data, error } = await supabase
+        .from("transactions")
+        .update(cleanUpdates)
+        .eq("id", id)
+        .select("*, accounts(name)")
+        .single();
+      if (error) throw error;
+      return data;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["transactions"] });
       qc.invalidateQueries({ queryKey: ["accounts"] });
@@ -109,11 +128,12 @@ export function useUpdateTransaction() {
 }
 
 export function useDeleteTransaction() {
-  const fetchApi = useApi();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      fetchApi(`/transactions/${id}`, { method: "DELETE" }),
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("transactions").delete().eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["transactions"] });
       qc.invalidateQueries({ queryKey: ["accounts"] });
@@ -124,9 +144,38 @@ export function useDeleteTransaction() {
 
 // ---- STATS ----
 export function useMonthlyStats() {
-  const fetchApi = useApi();
   return useQuery<MonthlyStats>({
     queryKey: ["monthly-stats"],
-    queryFn: () => fetchApi("/transactions/stats"),
+    queryFn: async () => {
+      const now = new Date();
+      const start = startOfMonth(now).toISOString();
+      const end = endOfMonth(now).toISOString();
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("amount, type, category")
+        .gte("date", start)
+        .lte("date", end);
+
+      if (error) throw error;
+
+      let total_income = 0;
+      let total_expense = 0;
+      const catMap: Record<string, number> = {};
+
+      for (const t of data || []) {
+        if (t.type === "income") total_income += Number(t.amount);
+        else {
+          total_expense += Number(t.amount);
+          catMap[t.category] = (catMap[t.category] || 0) + Number(t.amount);
+        }
+      }
+
+      return {
+        total_income,
+        total_expense,
+        category_totals: Object.entries(catMap).map(([category, total]) => ({ category, total })),
+      };
+    },
   });
 }

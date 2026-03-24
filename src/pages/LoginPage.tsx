@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useAuthStore } from "@/stores/authStore";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Wallet } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false);
@@ -11,7 +12,7 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const login = useAuthStore((s) => s.login);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,19 +20,18 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const endpoint = isSignup ? "/auth/register" : "/auth/login";
-      const body = isSignup ? { email, password, name } : { email, password };
-      
-      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-      
-      login(data.user, data.token);
+      if (isSignup) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { name } },
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+      navigate("/");
     } catch (err: any) {
       setError(err.message);
     } finally {
