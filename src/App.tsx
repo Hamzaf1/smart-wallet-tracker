@@ -10,12 +10,49 @@ import TransactionsPage from "./pages/TransactionsPage";
 import AccountsPage from "./pages/AccountsPage";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
+import OnboardingPage from "./pages/OnboardingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 function AuthGuard({ children, session }: { children: React.ReactNode; session: Session | null }) {
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!session) {
+      setNeedsOnboarding(false);
+      return;
+    }
+
+    // Check if onboarding was already completed locally
+    if (localStorage.getItem("onboarding_complete") === "true") {
+      setNeedsOnboarding(false);
+      return;
+    }
+
+    // Check if user has any accounts
+    supabase
+      .from("accounts")
+      .select("id", { count: "exact", head: true })
+      .then(({ count }) => {
+        if (count && count > 0) {
+          localStorage.setItem("onboarding_complete", "true");
+          setNeedsOnboarding(false);
+        } else {
+          setNeedsOnboarding(true);
+        }
+      });
+  }, [session]);
+
   if (!session) return <Navigate to="/login" replace />;
+  if (needsOnboarding === null) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+  if (needsOnboarding) return <Navigate to="/onboarding" replace />;
   return <>{children}</>;
 }
 
@@ -59,6 +96,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={session ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path="/onboarding" element={session ? <OnboardingPage /> : <Navigate to="/login" replace />} />
       <Route path="/" element={<AuthGuard session={session}><DashboardPage /></AuthGuard>} />
       <Route path="/transactions" element={<AuthGuard session={session}><TransactionsPage /></AuthGuard>} />
       <Route path="/accounts" element={<AuthGuard session={session}><AccountsPage /></AuthGuard>} />
