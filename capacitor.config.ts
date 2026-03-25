@@ -5,8 +5,11 @@ const config: CapacitorConfig = {
   appName: 'FinTrack',
   webDir: 'dist',
   server: {
-    url: 'https://af0d5d18-90d8-4ef2-9603-e2e4ec5528f6.lovableproject.com?forceHideBadge=true',
+    url: 'https://af0d5d18-90d8-4ef2-9603-e2e4ec5528f6.lovableproject.com/?forceHideBadge=true',
     cleartext: true
+  },
+  ios: {
+    contentInset: 'always'
   }
 };
 

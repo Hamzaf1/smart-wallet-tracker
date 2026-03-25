@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { Capacitor } from "@capacitor/core";
 
 export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false);
@@ -94,8 +95,13 @@ export default function LoginPage() {
             disabled={loading}
             onClick={async () => {
               setError("");
+              const isNative = Capacitor.isNativePlatform();
+              const redirectUri = isNative 
+                ? "app.lovable.af0d5d1890d84ef29603e2e4ec5528f6://login" 
+                : window.location.origin;
+                
               const { error } = await lovable.auth.signInWithOAuth("google", {
-                redirect_uri: window.location.origin,
+                redirect_uri: redirectUri,
               });
               if (error) setError(error.message);
             }}
@@ -116,8 +122,13 @@ export default function LoginPage() {
             disabled={loading}
             onClick={async () => {
               setError("");
+              const isNative = Capacitor.isNativePlatform();
+              const redirectUri = isNative 
+                ? "app.lovable.af0d5d1890d84ef29603e2e4ec5528f6://login" 
+                : window.location.origin;
+
               const { error } = await lovable.auth.signInWithOAuth("apple", {
-                redirect_uri: window.location.origin,
+                redirect_uri: redirectUri,
               });
               if (error) setError(error.message);
             }}

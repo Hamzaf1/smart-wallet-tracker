@@ -15,6 +15,8 @@ import ImportPage from "./pages/ImportPage";
 import BudgetPage from "./pages/BudgetPage";
 import RecurringPage from "./pages/RecurringPage";
 import NotFound from "./pages/NotFound";
+import { App as CapacitorApp } from "@capacitor/app";
+import { Capacitor } from "@capacitor/core";
 
 const queryClient = new QueryClient();
 
@@ -87,7 +89,23 @@ function AppRoutes() {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Handle Deep Links for Capacitor (Native iOS)
+    if (Capacitor.isNativePlatform()) {
+      CapacitorApp.addListener("appUrlOpen", async (data: any) => {
+        const url = new URL(data.url);
+        // Supabase will automatically pick up the session from the URL hash
+        // if we are on the same origin, but for custom schemes we might need to 
+        // manually handle it if the URL structure is different.
+        console.log("App opened with URL:", data.url);
+      });
+    }
+
+    return () => {
+      subscription.unsubscribe();
+      if (Capacitor.isNativePlatform()) {
+        CapacitorApp.removeAllListeners();
+      }
+    };
   }, []);
 
   if (loading) {
