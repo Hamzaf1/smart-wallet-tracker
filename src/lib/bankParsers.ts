@@ -135,6 +135,13 @@ export function parseBankStatement(file: File): Promise<{ transactions: ParsedTr
           }
         }
 
+        // Column indices
+        let dateCol = findColumn(headers, "date", "تاريخ", "date opération", "date operation", "date comptable");
+        let descCol = findColumn(headers, "libellé", "libelle", "description", "détail", "detail", "motif", "wording", "label", "بيان");
+        let amountCol = findColumn(headers, "montant", "amount", "مبلغ");
+        let debitCol = findColumn(headers, "débit", "debit", "retrait", "sortie");
+        let creditCol = findColumn(headers, "crédit", "credit", "versement", "entrée", "entree");
+
         // Bank-specific column overrides
         if (bankName === "Attijariwafa Bank") {
           if (dateCol === -1) dateCol = findColumn(headers, "date valeur", "date op");
@@ -152,7 +159,6 @@ export function parseBankStatement(file: File): Promise<{ transactions: ParsedTr
 
         const hasDebitCredit = debitCol !== -1 && creditCol !== -1;
         if (!hasDebitCredit && amountCol === -1) {
-          // Try last numeric column as amount
           amountCol = headers.length - 1;
         }
 
