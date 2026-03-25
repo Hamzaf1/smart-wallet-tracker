@@ -16,7 +16,29 @@ export const ACCOUNT_ICONS: Record<string, string> = {
   cash: "💵",
   card: "💳",
   savings: "🏧",
+  wallet: "👛",
 };
+
+export interface BankPreset {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+}
+
+export const MOROCCAN_BANKS: BankPreset[] = [
+  { id: "cih", name: "CIH Bank", icon: "🏦", color: "hsl(210, 80%, 45%)" },
+  { id: "barid", name: "Barid Bank", icon: "📮", color: "hsl(45, 90%, 50%)" },
+  { id: "attijariwafa", name: "Attijariwafa Bank", icon: "🏛️", color: "hsl(25, 85%, 50%)" },
+  { id: "bmce", name: "BMCE Bank", icon: "🔷", color: "hsl(210, 70%, 50%)" },
+  { id: "bp", name: "Banque Populaire", icon: "🟠", color: "hsl(30, 90%, 55%)" },
+  { id: "sgm", name: "Société Générale Maroc", icon: "🔴", color: "hsl(0, 80%, 50%)" },
+  { id: "bmci", name: "BMCI", icon: "🟢", color: "hsl(140, 60%, 40%)" },
+  { id: "boa", name: "Bank of Africa", icon: "🌍", color: "hsl(200, 70%, 45%)" },
+  { id: "bcp", name: "Banque Centrale Populaire", icon: "🏦", color: "hsl(15, 80%, 50%)" },
+  { id: "cash", name: "Cash", icon: "💵", color: "hsl(142, 71%, 45%)" },
+  { id: "custom", name: "Custom", icon: "💳", color: "hsl(217, 91%, 60%)" },
+];
 
 export const ACCOUNT_COLORS = [
   "hsl(217, 91%, 60%)",
