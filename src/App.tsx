@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
@@ -91,13 +91,17 @@ function AppRoutes() {
 
     // Handle Deep Links for Capacitor (Native iOS)
     if (Capacitor.isNativePlatform()) {
-      CapacitorApp.addListener("appUrlOpen", async (data: any) => {
-        const url = new URL(data.url);
-        // Supabase will automatically pick up the session from the URL hash
-        // if we are on the same origin, but for custom schemes we might need to 
-        // manually handle it if the URL structure is different.
-        console.log("App opened with URL:", data.url);
-      });
+      const handleAppUrlOpen = (data: any) => {
+        // Example: app.lovable.af0d5d1890d84ef29603e2e4ec5528f6://login#access_token=...
+        const slug = data.url.split("://").pop();
+        if (slug) {
+          const path = slug.startsWith("/") ? slug : `/${slug}`;
+          // For initial login, we often need to set window.location to properly parse the hash
+          window.location.href = path;
+        }
+      };
+      
+      CapacitorApp.addListener("appUrlOpen", handleAppUrlOpen);
     }
 
     return () => {
