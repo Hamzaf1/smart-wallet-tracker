@@ -110,29 +110,41 @@ export function parseBankStatement(file: File): Promise<{ transactions: ParsedTr
 
         // Detect bank format
         const joinedHeaders = headers.join(" ").toLowerCase();
+        const fileName = file.name.toLowerCase();
         let bankName = "Unknown Bank";
 
-        // Column indices
-        let dateCol = findColumn(headers, "date", "تاريخ", "date opération", "date operation", "date comptable");
-        let descCol = findColumn(headers, "libellé", "libelle", "description", "détail", "detail", "motif", "wording", "label", "بيان");
-        let amountCol = findColumn(headers, "montant", "amount", "مبلغ");
-        let debitCol = findColumn(headers, "débit", "debit", "retrait", "sortie");
-        let creditCol = findColumn(headers, "crédit", "credit", "versement", "entrée", "entree");
+        // Bank detection rules: [headerKeywords[], fileKeywords[], bankName, extraSetup?]
+        const BANK_DETECTORS: { name: string; headers: string[]; file: string[] }[] = [
+          { name: "CIH Bank", headers: ["cih", "date opération", "date comptable"], file: ["cih"] },
+          { name: "Barid Bank", headers: ["barid", "al barid", "بريد"], file: ["barid"] },
+          { name: "Attijariwafa Bank", headers: ["attijariwafa", "attijari", "awb", "wafabank"], file: ["attijariwafa", "attijari", "awb"] },
+          { name: "BMCE Bank", headers: ["bmce", "bank of africa", "boa"], file: ["bmce", "boa", "bank_of_africa", "bankofafrica"] },
+          { name: "Banque Populaire", headers: ["banque populaire", "bp", "chaabi", "bcp"], file: ["populaire", "chaabi", "bcp"] },
+          { name: "Société Générale Maroc", headers: ["société générale", "societe generale", "sgmb", "sg maroc"], file: ["societe_generale", "sgmb", "sg_maroc", "sgmaroc"] },
+          { name: "BMCI", headers: ["bmci", "bnp paribas"], file: ["bmci"] },
+          { name: "Bank of Africa", headers: ["bank of africa", "boa", "bmce"], file: ["bank_of_africa", "bankofafrica"] },
+          { name: "Banque Centrale Populaire", headers: ["centrale populaire", "bcp"], file: ["bcp", "centrale_populaire"] },
+        ];
 
-        // CIH-specific detection
-        if (joinedHeaders.includes("cih") || joinedHeaders.includes("date opération") || joinedHeaders.includes("date comptable")) {
-          bankName = "CIH Bank";
+        for (const bank of BANK_DETECTORS) {
+          if (bank.headers.some((k) => joinedHeaders.includes(k))) { bankName = bank.name; break; }
         }
-        // Barid Bank detection
-        if (joinedHeaders.includes("barid") || joinedHeaders.includes("al barid") || joinedHeaders.includes("بريد")) {
-          bankName = "Barid Bank";
-        }
-
-        // Fallback: if no bank detected, try filename
-        const fileName = file.name.toLowerCase();
         if (bankName === "Unknown Bank") {
-          if (fileName.includes("cih")) bankName = "CIH Bank";
-          else if (fileName.includes("barid")) bankName = "Barid Bank";
+          for (const bank of BANK_DETECTORS) {
+            if (bank.file.some((k) => fileName.includes(k))) { bankName = bank.name; break; }
+          }
+        }
+
+        // Bank-specific column overrides
+        if (bankName === "Attijariwafa Bank") {
+          if (dateCol === -1) dateCol = findColumn(headers, "date valeur", "date op");
+          if (descCol === -1) descCol = findColumn(headers, "libellé", "nature", "opération");
+        } else if (bankName === "Société Générale Maroc" || bankName === "BMCI") {
+          if (dateCol === -1) dateCol = findColumn(headers, "date comptable", "date valeur");
+          if (descCol === -1) descCol = findColumn(headers, "libellé opération", "nature opération");
+        } else if (bankName === "Banque Populaire" || bankName === "Banque Centrale Populaire") {
+          if (dateCol === -1) dateCol = findColumn(headers, "date opération", "date mouvement");
+          if (descCol === -1) descCol = findColumn(headers, "nature", "libellé");
         }
 
         if (dateCol === -1) dateCol = 0;
