@@ -8,6 +8,7 @@ import { useAccounts, useTransactions, useMonthlyStats } from "@/hooks/useFinanc
 import { useMonthlyInsights } from "@/hooks/useMonthlyInsights";
 import { useMonthlyChartData } from "@/hooks/useChartData";
 import { motion } from "framer-motion";
+import { usePredictiveBalance } from "@/hooks/usePredictiveBalance";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 const CHART_COLORS = ["hsl(217,91%,60%)", "hsl(142,71%,45%)", "hsl(38,92%,50%)", "hsl(280,67%,60%)", "hsl(0,84%,60%)", "hsl(200,80%,50%)"];
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const { data: stats } = useMonthlyStats();
   const { data: insights = [] } = useMonthlyInsights();
   const { data: chartData = [] } = useMonthlyChartData(6);
+  const prediction = usePredictiveBalance();
 
   const totalBalance = useMemo(() => accounts.reduce((sum, a) => sum + a.balance, 0), [accounts]);
   const recentTransactions = useMemo(() => transactions.slice(0, 5), [transactions]);
@@ -84,6 +86,31 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Predictive Balance */}
+        {prediction.daysLeft > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card rounded-2xl p-4 border border-border space-y-2"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Predicted End-of-Month Balance</p>
+                <p className={`text-lg font-bold ${prediction.predictedBalance >= 0 ? "text-income" : "text-expense"}`}>
+                  {prediction.predictedBalance.toLocaleString("en-US", { style: "currency", currency: "MAD" })}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-4 text-[11px] text-muted-foreground">
+              <span>{prediction.daysLeft} days left</span>
+              <span>~{prediction.dailySpendRate.toFixed(0)} MAD/day spending</span>
+            </div>
+          </motion.div>
+        )}
 
         {/* Monthly Insights */}
         {insights.length > 0 && (

@@ -47,6 +47,10 @@
 	</array>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <true/>
+    <key>NSFaceIDUsageDescription</key>
+    <string>FinTrack uses Face ID to securely unlock your finances</string>
+    <key>NSCameraUsageDescription</key>
+    <string>FinTrack uses the camera to scan receipts</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>

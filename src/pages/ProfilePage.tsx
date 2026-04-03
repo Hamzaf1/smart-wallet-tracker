@@ -1,12 +1,17 @@
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Moon, Sun, Target, RefreshCw, PiggyBank, TrendingUp, Car, Upload, Globe } from "lucide-react";
+import { LogOut, User, Moon, Sun, Target, RefreshCw, PiggyBank, TrendingUp, Car, Upload, Globe, Fingerprint, Shield, Download, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useI18n, Lang } from "@/lib/i18n";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useBiometricAuth } from "@/hooks/useBiometricAuth";
+import { useInactivityLock } from "@/hooks/useInactivityLock";
+import { useTransactions, useMonthlyStats, useAccounts } from "@/hooks/useFinanceData";
+import { exportTransactionsCSV, exportSummaryPDF } from "@/lib/exportUtils";
 
 const LANGS: { value: Lang; label: string }[] = [
   { value: "en", label: "English" },
@@ -21,6 +26,12 @@ export default function ProfilePage() {
   const [dark, setDark] = useState(() =>
     document.documentElement.classList.contains("dark")
   );
+  const [autoLock, setAutoLock] = useState(() => localStorage.getItem("auto_lock") === "true");
+  const { isAvailable: bioAvailable, isEnabled: bioEnabled, toggleBiometric } = useBiometricAuth();
+  useInactivityLock(autoLock);
+  const { data: transactions = [] } = useTransactions();
+  const { data: stats } = useMonthlyStats();
+  const { data: accounts = [] } = useAccounts();
 
   const { data: profile } = useQuery({
     queryKey: ["profile"],
@@ -99,6 +110,43 @@ export default function ProfilePage() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Biometric Lock */}
+          {bioAvailable && (
+            <div className="flex items-center gap-3 bg-card rounded-xl p-4 border border-border">
+              <Fingerprint className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium text-foreground flex-1">Face ID / Touch ID</span>
+              <Switch checked={bioEnabled} onCheckedChange={toggleBiometric} />
+            </div>
+          )}
+
+          {/* Auto-Lock */}
+          <div className="flex items-center gap-3 bg-card rounded-xl p-4 border border-border">
+            <Shield className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium text-foreground flex-1">Auto-lock (5 min)</span>
+            <Switch checked={autoLock} onCheckedChange={(v) => { setAutoLock(v); localStorage.setItem("auto_lock", String(v)); }} />
+          </div>
+
+          {/* Export */}
+          <button
+            onClick={() => exportTransactionsCSV(transactions)}
+            className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
+          >
+            <Download className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium text-foreground">Export CSV</span>
+          </button>
+          <button
+            onClick={() => exportSummaryPDF({
+              totalBalance: accounts.reduce((s, a) => s + a.balance, 0),
+              monthlyIncome: stats?.total_income ?? 0,
+              monthlyExpense: stats?.total_expense ?? 0,
+              transactions,
+            })}
+            className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
+          >
+            <FileText className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium text-foreground">Export PDF Report</span>
+          </button>
 
           <button
             onClick={() => setDark(!dark)}
