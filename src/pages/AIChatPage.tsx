@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Bot, Send, Sparkles, TrendingUp, PiggyBank, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
