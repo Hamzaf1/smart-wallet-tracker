@@ -1,10 +1,10 @@
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Moon, Sun, Target, RefreshCw, PiggyBank, TrendingUp, Car, Upload, Globe, Fingerprint, Shield, Download, FileText } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut, User, Moon, Sun, Target, RefreshCw, PiggyBank, TrendingUp, Car, Upload, Globe, Fingerprint, Shield, Download, FileText, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { useI18n, Lang } from "@/lib/i18n";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -12,6 +12,8 @@ import { useBiometricAuth } from "@/hooks/useBiometricAuth";
 import { useInactivityLock } from "@/hooks/useInactivityLock";
 import { useTransactions, useMonthlyStats, useAccounts } from "@/hooks/useFinanceData";
 import { exportTransactionsCSV, exportSummaryPDF } from "@/lib/exportUtils";
+import { useProfile } from "@/hooks/useProfile";
+import { EditProfileSheet } from "@/components/EditProfileSheet";
 
 const LANGS: { value: Lang; label: string }[] = [
   { value: "en", label: "English" },
@@ -27,25 +29,13 @@ export default function ProfilePage() {
     document.documentElement.classList.contains("dark")
   );
   const [autoLock, setAutoLock] = useState(() => localStorage.getItem("auto_lock") === "true");
+  const [editOpen, setEditOpen] = useState(false);
   const { isAvailable: bioAvailable, isEnabled: bioEnabled, toggleBiometric } = useBiometricAuth();
   useInactivityLock(autoLock);
   const { data: transactions = [] } = useTransactions();
   const { data: stats } = useMonthlyStats();
   const { data: accounts = [] } = useAccounts();
-
-  const { data: profile } = useQuery({
-    queryKey: ["profile"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-      return { ...data, email: user.email };
-    },
-  });
+  const { data: profile } = useProfile();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -71,16 +61,28 @@ export default function ProfilePage() {
       <div className="px-5 pt-6 space-y-6 pb-24">
         <h1 className="text-xl font-bold text-foreground">{t("profile")}</h1>
 
+        {/* Profile Card */}
         <div className="bg-card rounded-2xl p-5 border border-border flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-            <User className="h-7 w-7 text-primary" />
+          <div className="relative">
+            <Avatar className="h-16 w-16 border-2 border-primary/20 shadow-lg">
+              <AvatarImage src={profile?.avatar_url || undefined} />
+              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary">
+                <User className="h-7 w-7" />
+              </AvatarFallback>
+            </Avatar>
           </div>
-          <div>
-            <p className="text-base font-semibold text-foreground">
+          <div className="flex-1 min-w-0">
+            <p className="text-base font-semibold text-foreground truncate">
               {profile?.display_name || "User"}
             </p>
-            <p className="text-sm text-muted-foreground">{profile?.email}</p>
+            <p className="text-sm text-muted-foreground truncate">{profile?.email}</p>
           </div>
+          <button
+            onClick={() => setEditOpen(true)}
+            className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center"
+          >
+            <Pencil className="h-4 w-4 text-primary" />
+          </button>
         </div>
 
         <div className="space-y-2">
@@ -90,14 +92,18 @@ export default function ProfilePage() {
               onClick={() => navigate(item.path)}
               className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
             >
-              <item.icon className="h-5 w-5 text-primary" />
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
+                <item.icon className="h-4.5 w-4.5 text-primary" />
+              </div>
               <span className="text-sm font-medium text-foreground">{item.label}</span>
             </button>
           ))}
 
           {/* Language Switcher */}
           <div className="flex items-center gap-3 bg-card rounded-xl p-4 border border-border">
-            <Globe className="h-5 w-5 text-primary" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
+              <Globe className="h-4.5 w-4.5 text-primary" />
+            </div>
             <span className="text-sm font-medium text-foreground flex-1">{t("language")}</span>
             <Select value={lang} onValueChange={(v) => setLang(v as Lang)}>
               <SelectTrigger className="w-32 h-8 text-xs">
@@ -114,7 +120,9 @@ export default function ProfilePage() {
           {/* Biometric Lock */}
           {bioAvailable && (
             <div className="flex items-center gap-3 bg-card rounded-xl p-4 border border-border">
-              <Fingerprint className="h-5 w-5 text-primary" />
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
+                <Fingerprint className="h-4.5 w-4.5 text-primary" />
+              </div>
               <span className="text-sm font-medium text-foreground flex-1">Face ID / Touch ID</span>
               <Switch checked={bioEnabled} onCheckedChange={toggleBiometric} />
             </div>
@@ -122,7 +130,9 @@ export default function ProfilePage() {
 
           {/* Auto-Lock */}
           <div className="flex items-center gap-3 bg-card rounded-xl p-4 border border-border">
-            <Shield className="h-5 w-5 text-primary" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
+              <Shield className="h-4.5 w-4.5 text-primary" />
+            </div>
             <span className="text-sm font-medium text-foreground flex-1">Auto-lock (5 min)</span>
             <Switch checked={autoLock} onCheckedChange={(v) => { setAutoLock(v); localStorage.setItem("auto_lock", String(v)); }} />
           </div>
@@ -132,7 +142,9 @@ export default function ProfilePage() {
             onClick={() => exportTransactionsCSV(transactions)}
             className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
           >
-            <Download className="h-5 w-5 text-primary" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
+              <Download className="h-4.5 w-4.5 text-primary" />
+            </div>
             <span className="text-sm font-medium text-foreground">Export CSV</span>
           </button>
           <button
@@ -144,7 +156,9 @@ export default function ProfilePage() {
             })}
             className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
           >
-            <FileText className="h-5 w-5 text-primary" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
+              <FileText className="h-4.5 w-4.5 text-primary" />
+            </div>
             <span className="text-sm font-medium text-foreground">Export PDF Report</span>
           </button>
 
@@ -152,7 +166,9 @@ export default function ProfilePage() {
             onClick={() => setDark(!dark)}
             className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
           >
-            {dark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
+              {dark ? <Moon className="h-4.5 w-4.5 text-primary" /> : <Sun className="h-4.5 w-4.5 text-primary" />}
+            </div>
             <span className="text-sm font-medium text-foreground">
               {dark ? t("dark_mode") : t("light_mode")}
             </span>
@@ -161,12 +177,14 @@ export default function ProfilePage() {
 
         <Button
           variant="destructive"
-          className="w-full h-12"
+          className="w-full h-12 rounded-xl"
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4 mr-2" /> {t("logout")}
         </Button>
       </div>
+
+      <EditProfileSheet open={editOpen} onOpenChange={setEditOpen} />
     </AppLayout>
   );
 }

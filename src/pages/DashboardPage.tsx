@@ -1,5 +1,4 @@
 import { AppLayout } from "@/components/AppLayout";
-import { useAuthStore } from "@/stores/authStore";
 import { TrendingUp, TrendingDown, ArrowRight, Lightbulb, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CATEGORIES } from "@/lib/constants";
@@ -9,12 +8,15 @@ import { useMonthlyInsights } from "@/hooks/useMonthlyInsights";
 import { useMonthlyChartData } from "@/hooks/useChartData";
 import { motion } from "framer-motion";
 import { usePredictiveBalance } from "@/hooks/usePredictiveBalance";
+import { useProfile } from "@/hooks/useProfile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { User } from "lucide-react";
 
 const CHART_COLORS = ["hsl(217,91%,60%)", "hsl(142,71%,45%)", "hsl(38,92%,50%)", "hsl(280,67%,60%)", "hsl(0,84%,60%)", "hsl(200,80%,50%)"];
 
 export default function DashboardPage() {
-  const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const { data: accounts = [] } = useAccounts();
   const { data: transactions = [] } = useTransactions();
@@ -22,6 +24,7 @@ export default function DashboardPage() {
   const { data: insights = [] } = useMonthlyInsights();
   const { data: chartData = [] } = useMonthlyChartData(6);
   const prediction = usePredictiveBalance();
+  const { data: profile } = useProfile();
 
   const totalBalance = useMemo(() => accounts.reduce((sum, a) => sum + a.balance, 0), [accounts]);
   const recentTransactions = useMemo(() => transactions.slice(0, 5), [transactions]);
@@ -48,19 +51,27 @@ export default function DashboardPage() {
     return trend === "up" ? "text-expense" : trend === "down" ? "text-income" : "text-muted-foreground";
   };
 
+  const displayName = profile?.display_name || profile?.email?.split("@")[0] || "User";
+
   return (
     <AppLayout>
       <div className="px-5 pt-6 space-y-6 pb-24">
-        {/* Header */}
-        <div>
-          <p className="text-muted-foreground text-sm">Welcome back,</p>
-          <h1 className="text-xl font-bold text-foreground">
-            {user?.name || user?.email?.split("@")[0] || "User"}
-          </h1>
+        {/* Header with Avatar */}
+        <div className="flex items-center gap-3">
+          <Avatar className="h-11 w-11 border-2 border-primary/20 shadow-md">
+            <AvatarImage src={profile?.avatar_url || undefined} />
+            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-sm font-bold">
+              {displayName.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-muted-foreground text-xs">Welcome back,</p>
+            <h1 className="text-lg font-bold text-foreground leading-tight">{displayName}</h1>
+          </div>
         </div>
 
         {/* Balance Card */}
-        <div className="bg-primary rounded-2xl p-5 text-primary-foreground">
+        <div className="bg-primary rounded-2xl p-5 text-primary-foreground shadow-lg shadow-primary/20">
           <p className="text-sm opacity-80">Total Balance</p>
           <p className="text-3xl font-bold mt-1">
             {totalBalance.toLocaleString("en-US", { style: "currency", currency: "MAD" })}
@@ -214,7 +225,7 @@ export default function DashboardPage() {
                 const cat = CATEGORIES.find((c) => c.id === tx.category);
                 return (
                   <div key={tx.id} className="flex items-center gap-3 bg-card rounded-xl p-3 border border-border">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-lg">{cat?.icon || "📌"}</div>
+                    <CategoryIcon category={tx.category} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{cat?.label || tx.category}</p>
                       <p className="text-xs text-muted-foreground">{tx.accounts?.name} · {new Date(tx.date).toLocaleDateString()}</p>
