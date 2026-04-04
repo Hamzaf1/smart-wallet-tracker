@@ -232,6 +232,7 @@ const translations: Record<Lang, Record<string, string>> = {
     import: "Importar",
     accounts: "Cuentas",
     more: "Más",
+    ai: "IA",
     profile: "Perfil",
     budget: "Presupuesto",
     recurring: "Recurrente",
