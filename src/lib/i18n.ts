@@ -163,6 +163,7 @@ const translations: Record<Lang, Record<string, string>> = {
     import: "استيراد",
     accounts: "الحسابات",
     more: "المزيد",
+    ai: "ذكاء",
     profile: "الملف",
     budget: "الميزانية",
     recurring: "متكرر",
