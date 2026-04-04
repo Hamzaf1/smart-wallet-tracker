@@ -94,6 +94,7 @@ const translations: Record<Lang, Record<string, string>> = {
     import: "Import",
     accounts: "Comptes",
     more: "Plus",
+    ai: "IA",
     profile: "Profil",
     budget: "Budget",
     recurring: "Récurrent",
