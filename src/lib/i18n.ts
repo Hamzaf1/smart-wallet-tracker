@@ -25,6 +25,7 @@ const translations: Record<Lang, Record<string, string>> = {
     import: "Import",
     accounts: "Accounts",
     more: "More",
+    ai: "AI",
     profile: "Profile",
     budget: "Budget",
     recurring: "Recurring",
