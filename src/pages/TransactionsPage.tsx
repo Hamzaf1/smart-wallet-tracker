@@ -59,9 +59,7 @@ export default function TransactionsPage() {
                   key={tx.id}
                   className="flex items-center gap-3 bg-card rounded-xl p-3 border border-border"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-lg">
-                    {cat?.icon || "📌"}
-                  </div>
+                  <CategoryIcon category={tx.category} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
                       {cat?.label || tx.category}
