@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CATEGORIES } from "@/lib/constants";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { useTransactions, useDeleteTransaction } from "@/hooks/useFinanceData";
 import { TransactionSheet } from "@/components/TransactionSheet";
 import type { Transaction } from "@/lib/types";
