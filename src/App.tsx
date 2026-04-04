@@ -17,6 +17,7 @@ import RecurringPage from "./pages/RecurringPage";
 import SavingsPage from "./pages/SavingsPage";
 import InvestmentsPage from "./pages/InvestmentsPage";
 import CarExpensesPage from "./pages/CarExpensesPage";
+import AIChatPage from "./pages/AIChatPage";
 import NotFound from "./pages/NotFound";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
