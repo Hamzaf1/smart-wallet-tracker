@@ -1,4 +1,4 @@
-import { Home, ArrowLeftRight, Wallet, User, MoreHorizontal } from "lucide-react";
+import { Home, ArrowLeftRight, Wallet, Bot, MoreHorizontal } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 const tabs = [
   { path: "/", icon: Home, key: "home" },
   { path: "/transactions", icon: ArrowLeftRight, key: "activity" },
+  { path: "/ai-chat", icon: Bot, key: "ai" },
   { path: "/accounts", icon: Wallet, key: "accounts" },
   { path: "/profile", icon: MoreHorizontal, key: "more" },
 ];
