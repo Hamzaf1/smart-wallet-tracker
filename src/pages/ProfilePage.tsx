@@ -59,10 +59,10 @@ export default function ProfilePage() {
   return (
     <AppLayout>
       <div className="px-5 pt-6 space-y-6 pb-24">
-        <h1 className="text-xl font-bold text-foreground">{t("profile")}</h1>
+        <h1 className="text-xl font-bold text-foreground font-display">{t("profile")}</h1>
 
         {/* Profile Card */}
-        <div className="bg-card rounded-2xl p-5 border border-border flex items-center gap-4">
+        <div className="bg-card rounded-2xl p-5 border border-border/50 flex items-center gap-4">
           <div className="relative">
             <Avatar className="h-16 w-16 border-2 border-primary/20 shadow-lg">
               <AvatarImage src={profile?.avatar_url || undefined} />

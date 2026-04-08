@@ -16,7 +16,7 @@ export function exportTransactionsCSV(transactions: Transaction[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `fintrack-transactions-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `mizan-transactions-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -30,7 +30,7 @@ export function exportSummaryPDF(data: {
   // Generate a simple HTML-based printable report
   const html = `
 <!DOCTYPE html>
-<html><head><title>FinTrack Report</title>
+<html><head><title>Mizan Report</title>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px; color: #1a1a1a; }
   h1 { font-size: 24px; margin-bottom: 8px; }
@@ -45,7 +45,7 @@ export function exportSummaryPDF(data: {
   .income { color: #22c55e; }
   .expense { color: #ef4444; }
 </style></head><body>
-  <h1>FinTrack Monthly Report</h1>
+  <h1>Mizan Monthly Report</h1>
   <p class="subtitle">${new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}</p>
   <div class="summary">
     <div class="card"><div class="card-label">Balance</div><div class="card-value">${data.totalBalance.toFixed(2)} MAD</div></div>
