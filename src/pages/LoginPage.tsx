@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
+import mizanLogo from "@/assets/mizan-logo.png";
 
 export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false);
@@ -44,8 +45,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">
       {/* Ambient glow effects */}
-      <div className="absolute top-[-40%] left-[-20%] w-[500px] h-[500px] rounded-full bg-primary/8 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-30%] right-[-20%] w-[400px] h-[400px] rounded-full bg-primary/6 blur-[100px] pointer-events-none" />
+      <div className="absolute top-[-30%] left-[-10%] w-[400px] h-[400px] rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-15%] w-[350px] h-[350px] rounded-full bg-accent/20 blur-[100px] pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -59,21 +60,17 @@ export default function LoginPage() {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.15, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto w-[72px] h-[72px] rounded-[22px] bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25"
+            className="mx-auto w-[72px] h-[72px] rounded-[20px] bg-gradient-to-br from-primary/15 to-accent/20 flex items-center justify-center shadow-lg shadow-primary/10 border border-border/30"
           >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-primary-foreground">
-              <path d="M2 7a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7z" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M2 9h20" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M6 14h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
+            <img src={mizanLogo} alt="Mizan" width={44} height={44} className="object-contain" />
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.5 }}
           >
-            <h1 className="text-[26px] font-extrabold tracking-tight text-foreground">
-              FinTrack
+            <h1 className="text-[28px] font-extrabold tracking-tight text-foreground font-display">
+              Mizan
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
               {isSignup ? "Create your account to get started" : "Welcome back to your finances"}
@@ -91,7 +88,7 @@ export default function LoginPage() {
           <Button
             type="button"
             variant="outline"
-            className="w-full h-[52px] text-[15px] font-medium rounded-xl border-border/60 bg-card hover:bg-accent/50 transition-all duration-200"
+            className="w-full h-[52px] text-[15px] font-medium rounded-2xl border-border/60 bg-card hover:bg-accent/50 transition-all duration-200"
             disabled={loading}
             onClick={async () => {
               setError("");
@@ -118,7 +115,7 @@ export default function LoginPage() {
           <Button
             type="button"
             variant="outline"
-            className="w-full h-[52px] text-[15px] font-medium rounded-xl border-border/60 bg-card hover:bg-accent/50 transition-all duration-200"
+            className="w-full h-[52px] text-[15px] font-medium rounded-2xl border-border/60 bg-card hover:bg-accent/50 transition-all duration-200"
             disabled={loading}
             onClick={async () => {
               setError("");
@@ -178,7 +175,7 @@ export default function LoginPage() {
                   placeholder="Full name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="h-[52px] bg-card border-border/50 rounded-xl px-4 text-[15px] placeholder:text-muted-foreground/50 focus-visible:ring-primary/30 focus-visible:border-primary/40"
+                  className="h-[52px] bg-card border-border/50 rounded-2xl px-4 text-[15px] placeholder:text-muted-foreground/50 focus-visible:ring-primary/30 focus-visible:border-primary/40"
                 />
               </motion.div>
             )}
@@ -190,7 +187,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="h-[52px] bg-card border-border/50 rounded-xl px-4 text-[15px] placeholder:text-muted-foreground/50 focus-visible:ring-primary/30 focus-visible:border-primary/40"
+            className="h-[52px] bg-card border-border/50 rounded-2xl px-4 text-[15px] placeholder:text-muted-foreground/50 focus-visible:ring-primary/30 focus-visible:border-primary/40"
           />
           <Input
             type="password"
@@ -199,7 +196,7 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            className="h-[52px] bg-card border-border/50 rounded-xl px-4 text-[15px] placeholder:text-muted-foreground/50 focus-visible:ring-primary/30 focus-visible:border-primary/40"
+            className="h-[52px] bg-card border-border/50 rounded-2xl px-4 text-[15px] placeholder:text-muted-foreground/50 focus-visible:ring-primary/30 focus-visible:border-primary/40"
           />
 
           <AnimatePresence>
@@ -208,7 +205,7 @@ export default function LoginPage() {
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="text-destructive text-sm text-center bg-destructive/10 rounded-lg py-2.5 px-3"
+                className="text-destructive text-sm text-center bg-destructive/10 rounded-xl py-2.5 px-3"
               >
                 {error}
               </motion.p>
@@ -217,7 +214,7 @@ export default function LoginPage() {
 
           <Button
             type="submit"
-            className="w-full h-[52px] text-[15px] font-semibold rounded-xl bg-gradient-to-r from-primary to-primary/85 hover:from-primary/90 hover:to-primary/75 shadow-lg shadow-primary/20 transition-all duration-200"
+            className="w-full h-[52px] text-[15px] font-semibold rounded-2xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/25 transition-all duration-200"
             disabled={loading}
           >
             {loading ? (
