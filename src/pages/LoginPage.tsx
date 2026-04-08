@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Capacitor } from "@capacitor/core";
+import { Mail, CheckCircle2, RefreshCw } from "lucide-react";
 import mizanLogo from "@/assets/mizan-logo.png";
 
 export default function LoginPage() {
@@ -15,6 +16,9 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,17 +28,32 @@ export default function LoginPage() {
 
     try {
       if (isSignup) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { name } },
+          options: {
+            data: { name },
+            emailRedirectTo: window.location.origin,
+          },
         });
         if (error) throw error;
+        // If user was created but needs email confirmation
+        if (data.user && !data.session) {
+          setShowVerification(true);
+        } else if (data.session) {
+          navigate("/");
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          if (error.message.toLowerCase().includes("email not confirmed")) {
+            setShowVerification(true);
+            return;
+          }
+          throw error;
+        }
+        navigate("/");
       }
-      navigate("/");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -42,9 +61,134 @@ export default function LoginPage() {
     }
   };
 
+  const handleResendVerification = async () => {
+    setResending(true);
+    setResendSuccess(false);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) throw error;
+      setResendSuccess(true);
+      setTimeout(() => setResendSuccess(false), 5000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  // Verification pending screen
+  if (showVerification) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">
+        <div className="absolute top-[-30%] left-[-10%] w-[400px] h-[400px] rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-sm space-y-6 relative z-10 text-center"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
+            className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center"
+          >
+            <Mail className="h-9 w-9 text-primary" />
+          </motion.div>
+
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-foreground font-display">Check your email</h1>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              We've sent a verification link to{" "}
+              <span className="font-semibold text-foreground">{email}</span>.
+              Click the link to activate your Mizan account.
+            </p>
+          </div>
+
+          <div className="bg-card rounded-2xl p-4 border border-border/50 space-y-3">
+            <div className="flex items-start gap-3 text-left">
+              <CheckCircle2 className="h-5 w-5 text-income shrink-0 mt-0.5" />
+              <p className="text-sm text-muted-foreground">Check your inbox and spam folder</p>
+            </div>
+            <div className="flex items-start gap-3 text-left">
+              <CheckCircle2 className="h-5 w-5 text-income shrink-0 mt-0.5" />
+              <p className="text-sm text-muted-foreground">Click the verification link in the email</p>
+            </div>
+            <div className="flex items-start gap-3 text-left">
+              <CheckCircle2 className="h-5 w-5 text-income shrink-0 mt-0.5" />
+              <p className="text-sm text-muted-foreground">Come back and sign in to your account</p>
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {resendSuccess && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="text-income text-sm bg-income/10 rounded-xl py-2.5 px-3"
+              >
+                Verification email sent successfully!
+              </motion.p>
+            )}
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                className="text-destructive text-sm bg-destructive/10 rounded-xl py-2.5 px-3"
+              >
+                {error}
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          <div className="space-y-3">
+            <Button
+              onClick={handleResendVerification}
+              variant="outline"
+              className="w-full h-[48px] rounded-2xl text-sm font-medium"
+              disabled={resending}
+            >
+              {resending ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </motion.div>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Resend verification email
+                </>
+              )}
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full h-11 text-sm text-muted-foreground"
+              onClick={() => {
+                setShowVerification(false);
+                setError("");
+                setIsSignup(false);
+              }}
+            >
+              Back to sign in
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">
-      {/* Ambient glow effects */}
       <div className="absolute top-[-30%] left-[-10%] w-[400px] h-[400px] rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-15%] w-[350px] h-[350px] rounded-full bg-accent/20 blur-[100px] pointer-events-none" />
 
@@ -96,10 +240,7 @@ export default function LoginPage() {
               const redirectUri = isNative 
                 ? "app.lovable.af0d5d1890d84ef29603e2e4ec5528f6://login" 
                 : window.location.origin;
-                
-              const { error } = await lovable.auth.signInWithOAuth("google", {
-                redirect_uri: redirectUri,
-              });
+              const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: redirectUri });
               if (error) setError(error.message);
             }}
           >
@@ -123,10 +264,7 @@ export default function LoginPage() {
               const redirectUri = isNative 
                 ? "app.lovable.af0d5d1890d84ef29603e2e4ec5528f6://login" 
                 : window.location.origin;
-
-              const { error } = await lovable.auth.signInWithOAuth("apple", {
-                redirect_uri: redirectUri,
-              });
+              const { error } = await lovable.auth.signInWithOAuth("apple", { redirect_uri: redirectUri });
               if (error) setError(error.message);
             }}
           >
