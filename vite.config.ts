@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import path from "path"
 
 export default defineConfig({
   plugins: [
@@ -14,5 +15,10 @@ export default defineConfig({
         theme_color: '#000000'
       }
     })
-  ]
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
 })
