@@ -21,6 +21,7 @@ import AIChatPage from "./pages/AIChatPage";
 import NotFound from "./pages/NotFound";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
+import { Analytics } from '@vercel/analytics/react';
 
 const queryClient = new QueryClient();
 
@@ -150,6 +151,7 @@ const App = () => (
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>
+      <Analytics />
     </TooltipProvider>
   </QueryClientProvider>
 );
