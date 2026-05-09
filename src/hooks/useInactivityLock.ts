@@ -11,7 +11,8 @@ export function useInactivityLock(enabled: boolean) {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(async () => {
       await supabase.auth.signOut();
-      window.location.href = "/login";
+      // Use hash-safe path that works in both web and Capacitor WebView
+      window.location.replace(window.location.origin + "/login");
     }, INACTIVITY_TIMEOUT);
   }, [enabled]);
 

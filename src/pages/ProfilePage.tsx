@@ -93,7 +93,7 @@ export default function ProfilePage() {
               className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
             >
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
-                <item.icon className="h-4.5 w-4.5 text-primary" />
+                <item.icon className="h-5 w-5 text-primary" />
               </div>
               <span className="text-sm font-medium text-foreground">{item.label}</span>
             </button>
@@ -102,7 +102,7 @@ export default function ProfilePage() {
           {/* Language Switcher */}
           <div className="flex items-center gap-3 bg-card rounded-xl p-4 border border-border">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
-              <Globe className="h-4.5 w-4.5 text-primary" />
+              <Globe className="h-5 w-5 text-primary" />
             </div>
             <span className="text-sm font-medium text-foreground flex-1">{t("language")}</span>
             <Select value={lang} onValueChange={(v) => setLang(v as Lang)}>
@@ -121,7 +121,7 @@ export default function ProfilePage() {
           {bioAvailable && (
             <div className="flex items-center gap-3 bg-card rounded-xl p-4 border border-border">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
-                <Fingerprint className="h-4.5 w-4.5 text-primary" />
+                <Fingerprint className="h-5 w-5 text-primary" />
               </div>
               <span className="text-sm font-medium text-foreground flex-1">Face ID / Touch ID</span>
               <Switch checked={bioEnabled} onCheckedChange={toggleBiometric} />
@@ -131,7 +131,7 @@ export default function ProfilePage() {
           {/* Auto-Lock */}
           <div className="flex items-center gap-3 bg-card rounded-xl p-4 border border-border">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
-              <Shield className="h-4.5 w-4.5 text-primary" />
+              <Shield className="h-5 w-5 text-primary" />
             </div>
             <span className="text-sm font-medium text-foreground flex-1">Auto-lock (5 min)</span>
             <Switch checked={autoLock} onCheckedChange={(v) => { setAutoLock(v); localStorage.setItem("auto_lock", String(v)); }} />
@@ -143,7 +143,7 @@ export default function ProfilePage() {
             className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
-              <Download className="h-4.5 w-4.5 text-primary" />
+              <Download className="h-5 w-5 text-primary" />
             </div>
             <span className="text-sm font-medium text-foreground">Export CSV</span>
           </button>
@@ -157,7 +157,7 @@ export default function ProfilePage() {
             className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
-              <FileText className="h-4.5 w-4.5 text-primary" />
+              <FileText className="h-5 w-5 text-primary" />
             </div>
             <span className="text-sm font-medium text-foreground">Export PDF Report</span>
           </button>
@@ -167,7 +167,7 @@ export default function ProfilePage() {
             className="w-full flex items-center gap-3 bg-card rounded-xl p-4 border border-border"
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center shadow-sm">
-              {dark ? <Moon className="h-4.5 w-4.5 text-primary" /> : <Sun className="h-4.5 w-4.5 text-primary" />}
+              {dark ? <Moon className="h-5 w-5 text-primary" /> : <Sun className="h-5 w-5 text-primary" />}
             </div>
             <span className="text-sm font-medium text-foreground">
               {dark ? t("dark_mode") : t("light_mode")}

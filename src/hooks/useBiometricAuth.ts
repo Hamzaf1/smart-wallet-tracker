@@ -7,10 +7,9 @@ export function useBiometricAuth() {
   const [isEnabled, setIsEnabled] = useState(() => localStorage.getItem("biometric_enabled") === "true");
 
   useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      // Check if device supports biometrics
-      setIsAvailable(true); // Will be true on iOS devices with Face ID/Touch ID
-    }
+    // No real biometric plugin is installed yet, so the toggle would be cosmetic.
+    // Hide it until @capacitor-community/biometric-auth (or similar) is wired up.
+    setIsAvailable(false);
   }, []);
 
   const toggleBiometric = useCallback((enabled: boolean) => {
