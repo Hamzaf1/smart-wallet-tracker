@@ -1,6 +1,42 @@
 import { Transaction } from "@/lib/types";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
+import { toast } from "sonner";
 
-export function exportTransactionsCSV(transactions: Transaction[]) {
+async function saveAndShare(filename: string, content: string, mimeType: string) {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const res = await Filesystem.writeFile({
+        path: filename,
+        data: content,
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8,
+      });
+      await Share.share({
+        title: filename,
+        url: res.uri,
+        dialogTitle: "Export",
+      });
+    } catch (e: any) {
+      toast.error("Could not export file: " + (e?.message || "unknown error"));
+    }
+  } else {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+export async function exportTransactionsCSV(transactions: Transaction[]) {
+  if (!transactions.length) {
+    toast.error("No transactions to export");
+    return;
+  }
   const headers = ["Date", "Type", "Category", "Amount", "Account", "Note"];
   const rows = transactions.map((t) => [
     new Date(t.date).toLocaleDateString(),
@@ -8,29 +44,21 @@ export function exportTransactionsCSV(transactions: Transaction[]) {
     t.category,
     t.amount.toString(),
     t.accounts?.name || "",
-    t.note || "",
+    (t.note || "").replace(/"/g, '""'),
   ]);
-
   const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `mizan-transactions-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const filename = `mizan-transactions-${new Date().toISOString().slice(0, 10)}.csv`;
+  await saveAndShare(filename, csv, "text/csv");
 }
 
-export function exportSummaryPDF(data: {
+export async function exportSummaryPDF(data: {
   totalBalance: number;
   monthlyIncome: number;
   monthlyExpense: number;
   transactions: Transaction[];
 }) {
-  // Generate a simple HTML-based printable report
-  const html = `
-<!DOCTYPE html>
-<html><head><title>Mizan Report</title>
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Mizan Report</title>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px; color: #1a1a1a; }
   h1 { font-size: 24px; margin-bottom: 8px; }
@@ -56,19 +84,28 @@ export function exportSummaryPDF(data: {
   <table>
     <thead><tr><th>Date</th><th>Category</th><th>Amount</th><th>Note</th></tr></thead>
     <tbody>
-      ${data.transactions.slice(0, 50).map((t) => `
+      ${data.transactions.slice(0, 100).map((t) => `
         <tr>
           <td>${new Date(t.date).toLocaleDateString()}</td>
           <td>${t.category}</td>
           <td class="${t.type}">${t.type === "income" ? "+" : "-"}${t.amount.toFixed(2)} MAD</td>
-          <td>${t.note || "-"}</td>
+          <td>${(t.note || "-").replace(/</g, "&lt;")}</td>
         </tr>`).join("")}
     </tbody>
   </table>
 </body></html>`;
 
-  const w = window.open("", "_blank");
-  if (w) {
+  if (Capacitor.isNativePlatform()) {
+    // Native can't print() — share the HTML file; user can open in browser to print/save as PDF
+    const filename = `mizan-report-${new Date().toISOString().slice(0, 10)}.html`;
+    await saveAndShare(filename, html, "text/html");
+    toast.info("Open the file in a browser to save as PDF");
+  } else {
+    const w = window.open("", "_blank");
+    if (!w) {
+      toast.error("Pop-ups are blocked. Please allow pop-ups to export.");
+      return;
+    }
     w.document.write(html);
     w.document.close();
     setTimeout(() => w.print(), 500);
