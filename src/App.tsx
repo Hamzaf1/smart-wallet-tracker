@@ -21,6 +21,7 @@ import AIChatPage from "./pages/AIChatPage";
 import NotFound from "./pages/NotFound";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
+import { useProcessRecurring } from "./hooks/useProcessRecurring";
 
 const queryClient = new QueryClient();
 
