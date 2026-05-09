@@ -21,6 +21,7 @@ import AIChatPage from "./pages/AIChatPage";
 import NotFound from "./pages/NotFound";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
+import { useProcessRecurring } from "./hooks/useProcessRecurring";
 
 const queryClient = new QueryClient();
 
@@ -115,6 +116,8 @@ function AppRoutes() {
       }
     };
   }, []);
+
+  useProcessRecurring(session);
 
   if (loading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
